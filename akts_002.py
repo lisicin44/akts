@@ -10,8 +10,8 @@ app_version = 'AktsApp v 0.0.2 (22.08.2021)'
 def main():
     #define the logic of exe file
     app_help = InteractiveHelp()
-    A = SideData('SideA')
-    B = SideData('SideB')
+    A = SideData('A')
+    B = SideData('B')
 
     commands = {
         'help': app_help.gethelp,
@@ -68,6 +68,18 @@ def dataheaders(sidename):
     except KeyError:    #заготовка на будущее
         print('KeyError')
 
+def compare():
+    CONST_A = 'A'
+    CONST_B = 'B'
+    sideA = SideData.Get(CONST_A)
+    sideB = SideData.Get(CONST_B)
+    if sideA.dataloaded and sideB.dataloaded:
+        for sheet, Adf in sideA.get_df():
+            pass #iterate over Adf
+    
+    else:
+        print('\nNo data found for one of the sides!')
+
 class InteractiveHelp:
     """
     Объект для вызова интерактивной помощи
@@ -113,16 +125,17 @@ class SideData:
     #словарь для хранения инстансов
     sides_dict = {}
 
-    def __init__(self, name):
+    def __init__(self, name): #ПЕРЕДЕЛАТЬ - добавить проверку на наличие в словаре
         self.sidename = name
         self.dataloaded = False
         self.dataframesdict = dict()
-        SideData.sides_dict[name] = self #ПЕРЕДЕЛАТЬ ПРОВЕ
+        self.dfd = self.dataframesdict
+        SideData.sides_dict[name] = self 
 
     @corey_logger
     def upd_data(self, filepath):
         try:
-            self.dataframesdict.update(pd.read_excel(filepath, sheet_name=None))
+            self.dataframesdict.update(pd.read_excel(filepath, sheet_name=None, header=0, index_col=0))
             self.dataloaded = True
         except KeyError:    #заготовка на будущее
             print('KeyError')
@@ -133,6 +146,17 @@ class SideData:
                 print(dataframe)
         else:
             print('No data loaded')
+
+    def get_df(self, specify_sheet='ALL'):
+        if self.dataloaded:
+            if specify_sheet == 'ALL':
+                for sheet, dataframe in self.dataframesdict.items():
+                    yield (sheet, dataframe)
+            else:
+                try:
+                    return (specify_sheet, self.dataframesdict[specify_sheet])
+                except KeyError:
+                    print('\nSheet not found!')
 
     @classmethod
     def get(cls, name):
