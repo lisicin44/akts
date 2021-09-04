@@ -17,7 +17,8 @@ def main():
         'help': app_help.gethelp,
         'quit': quit,
         'load': load,
-        'dataheaders': dataheaders
+        'dataheaders': dataheaders,
+        'prepare': prepare
     }
 
     while True:
@@ -68,17 +69,23 @@ def dataheaders(sidename):
     except KeyError:    #заготовка на будущее
         print('KeyError')
 
+def prepare(sidename):
+    try:
+        SideData.get(sidename).prepare_df()
+    except KeyError:    #заготовка на будущее
+        print('KeyError')
+
+def parse_number(string, pattern):
+    match_object = pattern.search(string)
+    return match_object.group(1)
+
 def compare():
     CONST_A = 'A'
     CONST_B = 'B'
     sideA = SideData.get(CONST_A)
     sideB = SideData.get(CONST_B)
-    if sideA.dataloaded and sideB.dataloaded:
-        for sheet, Adf in sideA.get_df():
-            pass #iterate over Adf
-    
-    else:
-        print('\nNo data found for one of the sides!')
+    sideA.prepare_df()
+    sideB.prepare_df()
 
 class InteractiveHelp:
     """
@@ -129,6 +136,7 @@ class SideData:
         self.sidename = name
         self.dataloaded = False
         self.df = None
+        self.docnumberpattern = re.compile(r'([^0\D][1234567890]+)')
         SideData.sides_dict[name] = self 
 
     @corey_logger
@@ -155,6 +163,9 @@ class SideData:
                     return (specify_sheet, self.dataframesdict[specify_sheet])
                 except KeyError:
                     print('\nSheet not found!')
+
+    def prepare_df(self):
+        self.df['nomer'] = self.df['nomer'].apply(parse_number, pattern=self.docnumberpattern)
 
     @classmethod
     def get(cls, name):
