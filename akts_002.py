@@ -71,8 +71,8 @@ def dataheaders(sidename):
 def compare():
     CONST_A = 'A'
     CONST_B = 'B'
-    sideA = SideData.Get(CONST_A)
-    sideB = SideData.Get(CONST_B)
+    sideA = SideData.get(CONST_A)
+    sideB = SideData.get(CONST_B)
     if sideA.dataloaded and sideB.dataloaded:
         for sheet, Adf in sideA.get_df():
             pass #iterate over Adf
@@ -128,22 +128,20 @@ class SideData:
     def __init__(self, name): #ПЕРЕДЕЛАТЬ - добавить проверку на наличие в словаре
         self.sidename = name
         self.dataloaded = False
-        self.dataframesdict = dict()
-        self.dfd = self.dataframesdict
+        self.df = None
         SideData.sides_dict[name] = self 
 
     @corey_logger
     def upd_data(self, filepath):
         try:
-            self.dataframesdict.update(pd.read_excel(filepath, sheet_name=None, header=0, index_col=0))
+            self.df = pd.concat(pd.read_excel(filepath, sheet_name=None, header=0))
             self.dataloaded = True
         except KeyError:    #заготовка на будущее
-            print('KeyError')
+            print('KeyError, data not loaded')
 
     def dataheaders(self):
         if self.dataloaded:
-            for sheet_name, dataframe in self.dataframesdict.items():
-                print(dataframe)
+            print(self.df.head())
         else:
             print('No data loaded')
 
